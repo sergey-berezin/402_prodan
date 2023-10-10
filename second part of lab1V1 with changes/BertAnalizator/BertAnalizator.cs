@@ -1,29 +1,22 @@
 ﻿using BERTTokenizers;
-using Microsoft.ML.Data;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace BertAnalizator
 {
-    public class GetSession
+    public class Berttokanalizator
     {
         private InferenceSession session;
         //private static string modelUrl;
+        static Semaphore semaphore = new Semaphore(1,1);
         private static string modelPath;
         CancellationToken cancelToken;
 
-        private GetSession(InferenceSession inferenceSession)
+        private Berttokanalizator(InferenceSession inferenceSession)
         {
             this.session = inferenceSession;
         }
-        public static async Task<GetSession> Exist_Download_Model(string modelWebSource)
+        public static async Task<Berttokanalizator> Exist_Download_Model(string modelWebSource)
         {
                 String path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var modelPath = Path.Combine(path, "bert-large-uncased-whole-word-masking-finetuned-squad.onnx");
@@ -33,7 +26,7 @@ namespace BertAnalizator
                 {
                     downaloadedModelPath = await Download_Model(modelPath, modelWebSource);
                 }
-                return new GetSession(new InferenceSession(downaloadedModelPath));
+                return new Berttokanalizator(new InferenceSession(downaloadedModelPath));
            
         }
         public static async Task<string> Download_Model(string modelPath, string modelWebSource)
@@ -84,7 +77,11 @@ namespace BertAnalizator
 
                 //var session = new InferenceSession(modelPath);
                 //using var output = session.Run(input);
+
+                //защита от конкурентного выполнения
+                semaphore.WaitOne();
                 var output = session.Run(input);
+                semaphore.Release();
 
                 if (token.IsCancellationRequested)
                     token.ThrowIfCancellationRequested();
@@ -101,13 +98,11 @@ namespace BertAnalizator
                             .Select(o => tokenizer.IdToToken((int)o.VocabularyIndex))
                             .ToList();
 
-               // Task.Delay(3000).Wait();
-
                 if (token.IsCancellationRequested)
                     token.ThrowIfCancellationRequested();
 
                 return String.Join(" ", predictedTokens);
-
+                
 
             }, token, TaskCreationOptions.LongRunning);
             return FactoryTask;
