@@ -9,23 +9,22 @@ namespace Program
         {
             if (args.Length == 0)
             {
-                string path =  @args[0];
+                string path = @args[0];
                 //@"C:\Users\worka\source\repos\TH_ONNX_V1\text 2.txt";
                 string text = File.ReadAllText(path);
-                string modelWebSource = "https://storage.yandexcloud.net/dotnet4/bert-large-uncased-whole-word-masking-finetuned-squad.onnx";
                 Console.WriteLine(text);
 
                 CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
                 CancellationToken token = cancelTokenSource.Token;
 
-                var createTask = await Berttokanalizator.Exist_Download_Model(modelWebSource);
+                var createTask = await Berttokanalizator.Exist_Download_Model();
                 var Berttoker = createTask;
                 
                 string question; 
                 semaphore.WaitOne();
                 while ((question = Console.ReadLine()) != "")
                 {
-                    var answer = Get_Question(Berttoker, text, question, token);
+                    await Get_Question(Berttoker, text, question, token).ConfigureAwait(false);
                     semaphore.Release();
                 }
             }
@@ -33,18 +32,17 @@ namespace Program
             {
                 try
                 {
-                    
                     var answer = await Task.Run(() => getSession.QA_text_Model(text, question, token)); 
-                    semaphore.WaitOne();
-                    Console.WriteLine(question + " | " + answer);
-                    semaphore.Release();
-                }
+                    await Task.Yield();
+                    Console.WriteLine(question + " | " + answer); 
+                } 
                 catch (Exception ex)
                 {
-                    Console.WriteLine(question + " | " + ex.Message);
+                    Console.WriteLine(question + " | " + ex.Message);   
                     semaphore.Dispose();
                 }
             }
+
         }
     }
 }

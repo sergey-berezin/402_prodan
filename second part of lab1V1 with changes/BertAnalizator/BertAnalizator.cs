@@ -7,44 +7,44 @@ namespace BertAnalizator
     public class Berttokanalizator
     {
         private InferenceSession session;
-        //private static string modelUrl;
         static Semaphore semaphore = new Semaphore(1,1);
-        private static string modelPath;
-        CancellationToken cancelToken;
+      //CancellationToken cancelToken;
 
         private Berttokanalizator(InferenceSession inferenceSession)
         {
             this.session = inferenceSession;
         }
-        public static async Task<Berttokanalizator> Exist_Download_Model(string modelWebSource)
+        public static async Task<Berttokanalizator> Exist_Download_Model()
         {
+                //спрятал скачивание модели
+                string web_source = "https://storage.yandexcloud.net/dotnet4/bert-large-uncased-whole-word-masking-finetuned-squad.onnx";
                 String path = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                 var modelPath = Path.Combine(path, "bert-large-uncased-whole-word-masking-finetuned-squad.onnx");
                 string downaloadedModelPath = modelPath;
 
                 if (!File.Exists(modelPath))
                 {
-                    downaloadedModelPath = await Download_Model(modelPath, modelWebSource);
+                    downaloadedModelPath = await Download_Model(modelPath, web_source);
                 }
                 return new Berttokanalizator(new InferenceSession(downaloadedModelPath));
-           
         }
-        public static async Task<string> Download_Model(string modelPath, string modelWebSource)
+        public static async Task<string> Download_Model(string model_path, string web_source_model)
         {
             var httpClient = new HttpClient();
             bool Downloaded = false;
             while (!Downloaded)
             {
-                using var stream = await httpClient.GetStreamAsync(modelWebSource);
-                using var fileStream = new FileStream(modelPath, FileMode.CreateNew);
+             
+                using var stream = await httpClient.GetStreamAsync(web_source_model);
+                using var fileStream = new FileStream(model_path, FileMode.CreateNew);
                 await stream.CopyToAsync(fileStream);
                 Downloaded = true;
             }
-            if (!File.Exists(modelPath))
+            if (!File.Exists(model_path))
             {
                 throw new Exception("cannot download model!");
             }
-            return modelPath;
+            return model_path;
         }
         public async Task<string> QA_text_Model(string context_CTX, string question_QTX, CancellationToken token)
         {
@@ -86,8 +86,8 @@ namespace BertAnalizator
                 if (token.IsCancellationRequested)
                     token.ThrowIfCancellationRequested();
 
-                List<float> startLogits = (output.ToList().First().Value as IEnumerable<float>).ToList();
-                List<float> endLogits = (output.ToList().Last().Value as IEnumerable<float>).ToList();
+                List<float> startLogits = ((IEnumerable<float>)output.ToList().First().Value).ToList();
+                List<float> endLogits = ((IEnumerable<float>)output.ToList().Last().Value).ToList();
 
                 var startIndex = startLogits.ToList().IndexOf(startLogits.Max());
                 var endIndex = endLogits.ToList().IndexOf(endLogits.Max());
@@ -119,9 +119,9 @@ namespace BertAnalizator
         }
         public class BertInput
         {
-            public long[] InputIds { get; set; }
-            public long[] AttentionMask { get; set; }
-            public long[] TypeIds { get; set; }
+            public long[]? InputIds { get; set; }
+            public long[]? AttentionMask { get; set; }
+            public long[]? TypeIds { get; set; }
         }
     }
 }
