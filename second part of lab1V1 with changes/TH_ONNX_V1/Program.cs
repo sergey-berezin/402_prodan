@@ -9,8 +9,8 @@ namespace Program
         {
             if (args.Length == 0)
             {
-                string path = //@args[0];
-                @"C:\Users\worka\source\repos\TH_ONNX_V1\text 2.txt";
+                string path = @args[0];
+                //@"C:\Users\worka\source\repos\TH_ONNX_V1\text 2.txt";
                 string text = File.ReadAllText(path);
                 Console.WriteLine(text);
 
