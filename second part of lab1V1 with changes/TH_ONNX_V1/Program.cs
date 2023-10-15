@@ -9,8 +9,8 @@ namespace Program
         {
             if (args.Length == 0)
             {
-                string path = @args[0];
-                //@"C:\Users\worka\source\repos\TH_ONNX_V1\text 2.txt";
+                string path = //@args[0];
+                @"C:\Users\worka\source\repos\TH_ONNX_V1\text 2.txt";
                 string text = File.ReadAllText(path);
                 Console.WriteLine(text);
 
@@ -21,25 +21,31 @@ namespace Program
                 var Berttoker = createTask;
                 
                 string question; 
-                semaphore.WaitOne();
                 while ((question = Console.ReadLine()) != "")
                 {
                     await Get_Question(Berttoker, text, question, token).ConfigureAwait(false);
-                    semaphore.Release();
                 }
             }
             async Task Get_Question(Berttokanalizator getSession, string text, string question, CancellationToken token)
             {
                 try
                 {
+                    semaphore.WaitOne(); //захват семафора
                     var answer = await Task.Run(() => getSession.QA_text_Model(text, question, token)); 
-                    await Task.Yield();
                     Console.WriteLine(question + " | " + answer); 
                 } 
                 catch (Exception ex)
                 {
-                    Console.WriteLine(question + " | " + ex.Message);   
+                    Console.WriteLine(question + " | " + ex.Message);
                     semaphore.Dispose();
+                }
+                finally
+                { 
+                    semaphore.Release();
+                    await Task.Yield(); //возможность выполнения для других потоков 
+                    // позволяет обработать накопившиеся события input-output, возрат управлнеия
+                    //возможно он и не нужен,т.к. текущий поток занимает семафор но в данном случае это возможно(???) не нужно,
+                    //т.к. семафор не блокируется до тех пор, пока не будет вызван метод Release()
                 }
             }
 
