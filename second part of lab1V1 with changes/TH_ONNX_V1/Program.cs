@@ -30,8 +30,7 @@ namespace Program
             {
                 try
                 {
-                    semaphore.WaitOne(); //захват семафора
-                    var answer = await Task.Run(() => getSession.QA_text_Model(text, question, token)); 
+                    var answer = await getSession.QA_text_Model(text, question, token);
                     Console.WriteLine(question + " | " + answer); 
                 } 
                 catch (Exception ex)
@@ -40,8 +39,7 @@ namespace Program
                     semaphore.Dispose();
                 }
                 finally
-                { 
-                    semaphore.Release();
+                {
                     await Task.Yield(); //возможность выполнения для других потоков 
                     // позволяет обработать накопившиеся события input-output, возрат управлнеия
                     //возможно он и не нужен,т.к. текущий поток занимает семафор но в данном случае это возможно(???) не нужно,
