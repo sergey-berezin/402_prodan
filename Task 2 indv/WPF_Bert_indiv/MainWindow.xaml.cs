@@ -7,8 +7,6 @@ using Microsoft.Win32;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Windows.Input;
-using System;
 
 namespace WPF_Bert_indiv
 {
@@ -30,17 +28,15 @@ namespace WPF_Bert_indiv
         private List<string> dialogHistory = new List<string>();
         private CancellationTokenSource cancellationTokenSource;
         private string selectedFilePath;
-        public MainWindow()
-        {
-            InitializeComponent();
-            //error reporter awaiting
-        }
+        public MainWindow() => InitializeComponent();
         private async void LoadTextButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
             if (openFileDialog.ShowDialog() == true)
             {
                 selectedFilePath = openFileDialog.FileName;
+                
                 string text = File.ReadAllText(selectedFilePath);
                 TextDisplay.Text = text;
                 dialogHistory.Clear();

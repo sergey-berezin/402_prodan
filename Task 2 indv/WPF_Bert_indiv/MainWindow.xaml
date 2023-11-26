@@ -6,39 +6,40 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
         </Grid.ColumnDefinitions>
 
-        <!--left side (text/scroll(need fix))-->
+        <!-- Left Side (Text/Scroll) -->
         <StackPanel Grid.Column="0" Margin="10">
-            <Button Content="Load Text" Click="LoadTextButton_Click" Margin="0 0 0 10"/>
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          HorizontalScrollBarVisibility="Auto">
-                <TextBlock x:Name="TextDisplay" TextWrapping="Wrap" Height="55"/>
+            <Button Content="Load Text" Click="LoadTextButton_Click" Margin="0 0 0 10" Width="100"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Height="350">
+                <TextBlock x:Name="TextDisplay" TextWrapping="Wrap" Height="Auto" Width="Auto" Background="WhiteSmoke"/>
             </ScrollViewer>
         </StackPanel>
 
-        <!--right side(history/get/cancel/ans)-->
+        <!-- Right Side (History/Question/Get/Cancel/Answer) -->
         <StackPanel Grid.Column="1" Margin="10">
             <StackPanel>
                 <TextBox x:Name="QuestionInput" TextWrapping="Wrap" Margin="0 0 0 10"/>
-                <Button Content="Get Answer" Click="GetAnswerButton_Click" Margin="0 0 5 0" Width="378"/>
-                <Button Content="Cancel" Click="CancelButton_Click" Width="378"/>
+                <Button Content="Get Answer" Click="GetAnswerButton_Click" Margin="0 0 5 0" Width="100"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Width="100"/>
             </StackPanel>
-            <!--need some fix-->
-            <ItemsControl x:Name="DialogHistoryItemsControl" ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0 0 0 5" Padding="10" CornerRadius="10">
-                            <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Height="300">
+                <ItemsControl x:Name="DialogHistoryItemsControl" ItemsSource="{Binding DialogHistory}">
+                    <ItemsControl.ItemTemplate>
+
+                        <DataTemplate>
+                            <Border Margin="0 5" Padding="10" CornerRadius="10" Background="Gray">
+                                <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                            </Border>
+                        </DataTemplate>
+                        
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
         </StackPanel>
     </Grid>
 </Window>
-
