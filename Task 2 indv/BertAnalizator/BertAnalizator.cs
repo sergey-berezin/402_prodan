@@ -7,15 +7,9 @@ namespace BertAnalizator
     public class Berttokanalizator
     {
         private InferenceSession session;
-        //private List<string> dialogHistory;
         static Semaphore semaphore = new Semaphore(1,1);
         static bool isDownloaded = false;
-        public Berttokanalizator()
-        {
-            session = session;
-            //dialogHistory = new List<string>();
-
-        }
+        public Berttokanalizator() => session = session;
         public async Task Exist_Download_Model()
         {
             try
@@ -65,59 +59,69 @@ namespace BertAnalizator
                 throw;
             }
         }
-        public async Task<string> QA_text_Model(string context_CTX, string question_QTX, CancellationToken token)
+        public async Task<string> QA_text_Model(string context_CTX, string context_QTX, CancellationToken token)
         {
-            var FactoryTask = await Task.Factory.StartNew<string>(_ =>
+            try
             {
-                if (token.IsCancellationRequested)
-                    token.ThrowIfCancellationRequested();
-
-                var sentence = $"{{\"question\": {question_QTX}, \"context\": \"@CTX\"}}".Replace("@CTX", context_CTX);
-                var tokenizer = new BertUncasedLargeTokenizer();
-                var tokens = tokenizer.Tokenize(sentence);
-                var encoded = tokenizer.Encode(tokens.Count(), sentence);
-               
-                var bertInput = new BertInput()
+                var FactoryTask = await Task.Factory.StartNew<string>(_ =>
                 {
-                    InputIds = encoded.Select(t => t.InputIds).ToArray(),
-                    AttentionMask = encoded.Select(t => t.AttentionMask).ToArray(),
-                    TypeIds = encoded.Select(t => t.TokenTypeIds).ToArray(),
-                };
+                    try // вылеты без блока при отмене анализа
+                    {
+                        if (!isDownloaded)
+                            throw new Exception("Model is not downloaded!");
+                        
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
+                       
+                        var sentence = $"{{\"context_QTX\": {context_QTX}, \"context\": \"@CTX\"}}".Replace("@CTX", context_CTX);
+                        var tokenizer = new BertUncasedLargeTokenizer();
+                        var tokens = tokenizer.Tokenize(sentence);
+                        var encoded = tokenizer.Encode(tokens.Count(), sentence);
+                        var bertInput = new BertInput()
+                        {
+                            InputIds = encoded.Select(t => t.InputIds).ToArray(),
+                            AttentionMask = encoded.Select(t => t.AttentionMask).ToArray(),
+                            TypeIds = encoded.Select(t => t.TokenTypeIds).ToArray(),
+                        };
+                        var input_ids = ConvertToTensor(bertInput.InputIds, bertInput.InputIds.Length);
+                        var attention_mask = ConvertToTensor(bertInput.AttentionMask, bertInput.InputIds.Length);
+                        var token_type_ids = ConvertToTensor(bertInput.TypeIds, bertInput.InputIds.Length);
+                        var input = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor("input_ids", input_ids),
+                                                    NamedOnnxValue.CreateFromTensor("input_mask", attention_mask),
+                                                    NamedOnnxValue.CreateFromTensor("segment_ids", token_type_ids) };
+                        semaphore.WaitOne();
+                        var output = session.Run(input);
+                        semaphore.Release();
 
-                var input_ids = ConvertToTensor(bertInput.InputIds, bertInput.InputIds.Length);
-                var attention_mask = ConvertToTensor(bertInput.AttentionMask, bertInput.InputIds.Length);
-                var token_type_ids = ConvertToTensor(bertInput.TypeIds, bertInput.InputIds.Length);
-
-                var input = new List<NamedOnnxValue> { NamedOnnxValue.CreateFromTensor("input_ids", input_ids),
-                                                        NamedOnnxValue.CreateFromTensor("input_mask", attention_mask),
-                                                        NamedOnnxValue.CreateFromTensor("segment_ids", token_type_ids) };
-                semaphore.WaitOne();
-                var output = session.Run(input);
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
+                        List<float> startLogits = ((IEnumerable<float>)output.ToList().First().Value).ToList();
+                        List<float> endLogits = ((IEnumerable<float>)output.ToList().Last().Value).ToList();
+                        var startIndex = startLogits.ToList().IndexOf(startLogits.Max());
+                        var endIndex = endLogits.ToList().IndexOf(endLogits.Max());
+                        var predictedTokens = tokens
+                                    .Skip(startIndex)
+                                    .Take(endIndex + 1 - startIndex)
+                                    .Select(o => tokenizer.IdToToken((int)o.VocabularyIndex))
+                                    .ToList();
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
+                        if (token.IsCancellationRequested)
+                            token.ThrowIfCancellationRequested();
+                        return string.Join(" ", predictedTokens);
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex.Message;
+                    }
+                }, token, TaskCreationOptions.LongRunning);
+                return FactoryTask;
+            }
+            catch (Exception)
+            {
                 semaphore.Release();
-
-                if (token.IsCancellationRequested)
-                    token.ThrowIfCancellationRequested();
-
-                List<float> startLogits = ((IEnumerable<float>)output.ToList().First().Value).ToList();
-                List<float> endLogits = ((IEnumerable<float>)output.ToList().Last().Value).ToList();
-
-                var startIndex = startLogits.ToList().IndexOf(startLogits.Max());
-                var endIndex = endLogits.ToList().IndexOf(endLogits.Max());
-
-                var predictedTokens = tokens
-                            .Skip(startIndex)
-                            .Take(endIndex + 1 - startIndex)
-                            .Select(o => tokenizer.IdToToken((int)o.VocabularyIndex))
-                            .ToList();
-
-                if (token.IsCancellationRequested)
-                    token.ThrowIfCancellationRequested();
-
-                return String.Join(" ", predictedTokens);
-                
-
-            }, token, TaskCreationOptions.LongRunning);
-            return FactoryTask;
+                throw;
+            }
         }
         public static Tensor<long> ConvertToTensor(long[] inputArray, int inputDimension)
         {
