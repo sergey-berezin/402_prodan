@@ -14,20 +14,25 @@
         <!-- Left Side (Text/Scroll) -->
         <StackPanel Grid.Column="0" Margin="10">
             <Button Content="Load Text" Click="LoadTextButton_Click" Margin="0 0 0 10" Width="100"/>
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Height="350">
-                <TextBlock x:Name="TextDisplay" TextWrapping="Wrap" Height="Auto" Width="Auto" Background="WhiteSmoke"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Height="350"> <!--HorizontalScrollBarVisibility="Auto"-->
+
+                <Border Margin="0 5" Padding="5" CornerRadius="10" Background="WhiteSmoke">
+                    <TextBlock x:Name="TextDisplay" TextWrapping="Wrap" Height="Auto" Width="Auto"/>
+                </Border>
+            
             </ScrollViewer>
         </StackPanel>
 
-        <!-- Right Side (History/Question/Get/Cancel/Answer) -->
+        <!-- Right Side (History/Question/Cancel/Answer) -->
         <StackPanel Grid.Column="1" Margin="10">
             <StackPanel>
                 <TextBox x:Name="QuestionInput" TextWrapping="Wrap" Margin="0 0 0 10"/>
-                <Button Content="Get Answer" Click="GetAnswerButton_Click" Margin="0 0 5 0" Width="100"/>
-                <Button Content="Cancel" Click="CancelButton_Click" Width="100"/>
+                <Button Content="Get Answer" Click="GetAnswerButton_Click" Margin="0 0 5 0" Width="102"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Width="106"/>
             </StackPanel>
 
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Height="300">
+                
                 <ItemsControl x:Name="DialogHistoryItemsControl" ItemsSource="{Binding DialogHistory}">
                     <ItemsControl.ItemTemplate>
 
@@ -39,6 +44,7 @@
                         
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+            
             </ScrollViewer>
         </StackPanel>
     </Grid>

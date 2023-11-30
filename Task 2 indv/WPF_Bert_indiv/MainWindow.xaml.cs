@@ -5,8 +5,6 @@ using System.Windows;
 using BertAnalizator;
 using Microsoft.Win32;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace WPF_Bert_indiv
 {
@@ -14,14 +12,6 @@ namespace WPF_Bert_indiv
     /// Interaction logic for MainWindow.xaml
     /// </summary>
 
-    public abstract class Components : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void RaisePropertyChanged([CallerMemberName] string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
     public partial class MainWindow : Window
     {
         private Berttokanalizator bertAnalizator = new Berttokanalizator();
@@ -36,7 +26,6 @@ namespace WPF_Bert_indiv
             if (openFileDialog.ShowDialog() == true)
             {
                 selectedFilePath = openFileDialog.FileName;
-                
                 string text = File.ReadAllText(selectedFilePath);
                 TextDisplay.Text = text;
                 dialogHistory.Clear();
@@ -49,13 +38,13 @@ namespace WPF_Bert_indiv
         {
             string question = QuestionInput.Text;
 
-            AddToDialogHistory(question);
+            AddToDialogHistory($"Question: {question}"); //не вышло красить ответ и вопрос в разные цвета
 
             try
             {
                 cancellationTokenSource = new CancellationTokenSource();
                 string answer = await bertAnalizator.QA_text_Model(TextDisplay.Text, question, cancellationTokenSource.Token);
-                AddToDialogHistory(answer);
+                AddToDialogHistory($"Answer: {answer}");
             }
             catch (TaskCanceledException)
             {
@@ -66,7 +55,6 @@ namespace WPF_Bert_indiv
         {
             cancellationTokenSource?.Cancel();
         }
-
         private void AddToDialogHistory(string item)
         {
             dialogHistory.Add(item);
