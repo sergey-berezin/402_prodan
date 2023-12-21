@@ -1,24 +1,34 @@
 ﻿using System.IO;
+using Newtonsoft.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using BertAnalizator;
 using Microsoft.Win32;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System;
 
 namespace WPF_Bert_indiv
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-
     public partial class MainWindow : Window
     {
         private Berttokanalizator bertAnalizator = new Berttokanalizator();
-        private List<string> dialogHistory = new List<string>();
+        private ObservableCollection<DialogItem> dialogHistory = new ObservableCollection<DialogItem>();
         private CancellationTokenSource cancellationTokenSource;
         private string selectedFilePath;
-        public MainWindow() => InitializeComponent();
+        private const string HistoryFileName = "dialog_history.json";
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            LoadDialogHistory();
+            DataContext = this;
+        }
+        public class DialogItem
+        {
+            public string Question { get; set; }
+            public string Answer { get; set; }
+        }
         private async void LoadTextButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -28,6 +38,7 @@ namespace WPF_Bert_indiv
                 selectedFilePath = openFileDialog.FileName;
                 string text = File.ReadAllText(selectedFilePath);
                 TextDisplay.Text = text;
+
                 dialogHistory.Clear();
                 DialogHistoryItemsControl.ItemsSource = dialogHistory;
 
@@ -38,27 +49,48 @@ namespace WPF_Bert_indiv
         {
             string question = QuestionInput.Text;
 
-            AddToDialogHistory($"Question: {question}"); //не вышло красить ответ и вопрос в разные цвета
+            AddToDialogHistory(item: new DialogItem { Question = question });
 
             try
             {
                 cancellationTokenSource = new CancellationTokenSource();
                 string answer = await bertAnalizator.QA_text_Model(TextDisplay.Text, question, cancellationTokenSource.Token);
-                AddToDialogHistory($"Answer: {answer}");
+                AddToDialogHistory(item: new DialogItem { Answer = answer });
             }
             catch (TaskCanceledException)
             {
-                AddToDialogHistory("Answer operation cancelled");
+                AddToDialogHistory(item: new DialogItem { Answer = "Answer operation cancelled" });
             }
         }
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             cancellationTokenSource?.Cancel();
         }
-        private void AddToDialogHistory(string item)
+        private void AddToDialogHistory(DialogItem item)
         {
             dialogHistory.Add(item);
-            DialogHistoryItemsControl.Items.Refresh();
+            SaveDialogHistory();
+        }
+        private void SaveDialogHistory()
+        {
+            string json = JsonConvert.SerializeObject(dialogHistory);
+            File.WriteAllText(HistoryFileName, json);
+        }
+        private void LoadDialogHistory()
+        {
+            if (File.Exists(HistoryFileName))
+            {
+                try
+                {
+                    string json = File.ReadAllText(HistoryFileName);
+                    dialogHistory = JsonConvert.DeserializeObject<ObservableCollection<DialogItem>>(json);
+                    DialogHistoryItemsControl.ItemsSource = dialogHistory;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"failed to load dialog history: {ex.Message}");
+                }
+            }
         }
     }
 }
