@@ -1,0 +1,48 @@
+﻿<Window x:Class="WPF_Bert_indiv.MainWindow"  
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"  
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"  
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"  
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"  
+        mc:Ignorable="d"  
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+
+        
+        <StackPanel Grid.Column="0" Margin="10">
+            <Button Content="Load Text" Click="LoadTextButton_Click" Margin="0 0 0 10" Width="100"/>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Height="350">
+
+                <Border Margin="0 5" Padding="5" CornerRadius="10" Background="WhiteSmoke">
+                    <TextBox x:Name="TextDisplay" TextWrapping="Wrap" AcceptsReturn="True"  Height="Auto" Width="Auto"/>
+                </Border>
+
+            </ScrollViewer>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Margin="10">
+            <StackPanel>
+                <TextBox x:Name="QuestionInput" TextWrapping="Wrap" Margin="0 0 0 10"/>
+                <Button Content="Get Answer" Click="GetAnswerButton_Click" Margin="0 0 5 0" Width="102"/>
+                <Button Content="Cancel" Click="CancelButton_Click" Width="106"/>
+            </StackPanel>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="DialogHistoryItemsControl" Margin="0,-5">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0 5">
+                                <TextBlock Text="{Binding Question}" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Answer}" Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            
+        </StackPanel>
+    </Grid>
+</Window>
